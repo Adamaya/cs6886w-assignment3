@@ -127,8 +127,10 @@ class ActivationQuantizer(nn.Module):
 
             # Standard per-tensor affine quantization
             scale = (x_max - x_min) / float(qmax - qmin)
+            print(scale)
             # Zero-point is implicitly handled via x_min
             q = torch.round((x - x_min) / scale).clamp(qmin, qmax)
+            print(q)
             x_hat = q * scale + x_min
 
         return x_hat
