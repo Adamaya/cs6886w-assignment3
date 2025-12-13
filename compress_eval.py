@@ -368,18 +368,18 @@ def main():
         )
 
         # Parallel coordinates plot
-        pc_plot = wandb.plot.parallel_coordinates(
-            table,
-            class_column="weight_bits",  # used for color grouping
-            cols=[
-                "baseline_model_mb",
-                "quant_model_mb",
-                "activation_mem_q_mb",
-                "quant_test_acc",
-            ],
-        )
+        # pc_plot = wandb.plot.parallel_coordinates(
+        #     table,
+        #     class_column="weight_bits",  # used for color grouping
+        #     cols=[
+        #         "baseline_model_mb",
+        #         "quant_model_mb",
+        #         "activation_mem_q_mb",
+        #         "quant_test_acc",
+        #     ],
+        # )
 
-        wandb.log({"compression_parallel_plot": pc_plot})
+        # wandb.log({"compression_parallel_plot": pc_plot})
 
 
 if __name__ == "__main__":
