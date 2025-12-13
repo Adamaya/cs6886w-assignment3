@@ -75,44 +75,59 @@ def quantize_module_weights(module: nn.Module, num_bits: int = 8, exclude_first_
 
 class ActivationQuantizer(nn.Module):
     """
-    Per-tensor uniform fake quantization for activations.
+    Per-tensor uniform quantization for activations.
 
-    - If signed=False (typical after ReLU / ReLU6), use [0, 2^b - 1].
-    - If signed=True, use symmetric [-2^(b-1), 2^(b-1) - 1].
+    - If signed=False (typical after ReLU / ReLU6), we quantize to [0, 2^b - 1].
+    - If signed=True, we use symmetric range [-2^(b-1), 2^(b-1) - 1].
+
+    The forward does:
+        x -> (quantize to integer grid) -> (dequantize back to float)
+
+    So the values behave exactly as if they were stored in low precision,
+    but we keep them as floats so existing layers (Conv2d, Linear, etc.) still work.
     """
 
     def __init__(self, num_bits: int = 8, signed: bool = False):
         super().__init__()
+        assert num_bits >= 1 and num_bits <= 16, "num_bits should be in [1, 16]"
         self.num_bits = num_bits
         self.signed = signed
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if not x.is_floating_point():
-            return x
-        if x.numel() == 0:
+        # If it's not a floating tensor or empty, just pass it through
+        if (not x.is_floating_point()) or x.numel() == 0:
             return x
 
         eps = 1e-8
 
         if self.signed:
-            # symmetric quantization around 0
+            # Symmetric range around 0: [-qmax-1, qmax]
             qmax = 2 ** (self.num_bits - 1) - 1
             qmin = -2 ** (self.num_bits - 1)
+
+            # Max absolute value for scaling
             max_val = x.abs().max()
             if max_val < eps:
                 return x
-            scale = max_val / float(qmax)
+
+            scale = max_val / float(qmax)        # step size
+            # Quantize to integer grid then dequantize
             q = torch.round(x / scale).clamp(qmin, qmax)
             x_hat = q * scale
+
         else:
-            # unsigned [0, 2^b - 1] – good for ReLU/ReLU6
+            # Unsigned range [0, 2^b - 1]: good for ReLU/ReLU6 activations
             qmax = 2 ** self.num_bits - 1
             qmin = 0
+
             x_min = x.min()
             x_max = x.max()
             if (x_max - x_min).abs() < eps:
                 return x
+
+            # Standard per-tensor affine quantization
             scale = (x_max - x_min) / float(qmax - qmin)
+            # Zero-point is implicitly handled via x_min
             q = torch.round((x - x_min) / scale).clamp(qmin, qmax)
             x_hat = q * scale + x_min
 
