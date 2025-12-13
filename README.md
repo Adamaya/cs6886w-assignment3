@@ -148,3 +148,17 @@ Best model saved to: ./checkpoints/mobilenetv2_cifar10_best.pth
 ```
 python compress_eval.py --checkpoint ./checkpoints/mobilenetv2_cifar10_best.pth --weight_bits 8 --act_bits 8 --batch_size 128 --device cuda
 ```
+D:\Mtech\cs6886w-assignment3\compress_eval.py:158: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  ckpt = torch.load(args.checkpoint, map_location=device)
+Missing keys when loading: []
+Unexpected keys when loading: []
+Baseline model size (weights only, FP32): 8.4021 MB
+Quantized model size (weights + overhead): 1.0507 MB
+  main weight data: 1.0503 MB
+  overhead (scales/zps): 0.000404 MB
+Compression ratio (weights): 8.00x
+Files already downloaded and verified
+
+Activation bytes (FP32): 127.3918 MB
+Activation bytes (quantized, 4 bits): 15.9240 MB
+Compression ratio (activations): 8.00x
