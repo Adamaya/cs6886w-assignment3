@@ -10,7 +10,8 @@ from train_mobilenetv2 import (
     get_cifar10_loaders,
     set_seed,
 )
-from utils.quantization import quantize_module_weights
+
+from utils.quantization import quantize_module_weights, ActivationQuantizer
 
 
 # -------- size utilities -------- #
@@ -190,6 +191,35 @@ def get_args():
     )
     return parser.parse_args()
 
+def attach_activation_quantization(model: nn.Module, act_bits: int = 8, signed: bool = False):
+    """
+    Attach fake activation quantization after ReLU / ReLU6 layers using forward hooks.
+    This does *not* change the architecture or checkpoints.
+    """
+    quantizers = []
+
+    def make_hook(qmod):
+        def hook(module, inp, out):
+            # out is a tensor (or tuple); ActivationQuantizer will quantize it
+            if isinstance(out, torch.Tensor):
+                return qmod(out)
+            elif isinstance(out, (list, tuple)) and len(out) > 0 and isinstance(out[0], torch.Tensor):
+                return type(out)([qmod(out[0])] + list(out[1:]))
+            else:
+                return out
+        return hook
+
+    for m in model.modules():
+        # MobileNetV2 uses ReLU6; include ReLU just in case.
+        if isinstance(m, (nn.ReLU6, nn.ReLU)):
+            q = ActivationQuantizer(num_bits=act_bits, signed=signed)
+            quantizers.append(q)
+            m.register_forward_hook(make_hook(q))
+
+    # Just to keep them alive (not strictly necessary if you don't need to access them later)
+    model._activation_quantizers = quantizers
+    return model
+
 
 def main():
     args = get_args()
@@ -242,6 +272,14 @@ def main():
         num_bits=args.weight_bits,
         exclude_first_last=args.exclude_first_last,
     ).to(device)
+
+    # Attach activation fake-quantization
+    print(f"==> Attaching activation quantization ({args.act_bits} bits)...")
+    model_q = attach_activation_quantization(
+        model_q,
+        act_bits=args.act_bits,
+        signed=False  # ReLU6 outputs are non-negative
+    )
 
     # Quantized model size (estimate)
     quant_model_mb, main_mb, overhead_mb = estimate_model_size_quantized(
