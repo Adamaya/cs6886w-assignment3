@@ -356,6 +356,8 @@ def main():
             "activation_mem_q_mb": act_q_mb,
             "quant_test_loss": loss,
             "quant_test_acc": acc,
+            "compression_ratio_activations": act_ratio,
+            "compression_ratio_weights": baseline_model_mb / quant_model_mb,
         }
 
         # Log scalar metrics
