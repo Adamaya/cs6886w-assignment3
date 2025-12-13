@@ -200,6 +200,12 @@ def get_args():
         default="mobilenetv2_compression",
         help="W&B project name",
     )
+    parser.add_argument(
+        "--wandb_run_name",
+        type=str,
+        default=None,
+        help="Optional W&B run name",
+    )
 
     return parser.parse_args()
 
