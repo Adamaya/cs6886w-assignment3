@@ -278,7 +278,7 @@ def main():
     model_q = attach_activation_quantization(
         model_q,
         act_bits=args.act_bits,
-        signed=True  # ReLU6 outputs are non-negative
+        signed=False  # ReLU6 outputs are non-negative
     )
 
     # Quantized model size (estimate)
