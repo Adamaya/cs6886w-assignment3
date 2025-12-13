@@ -40,8 +40,8 @@ def estimate_model_size_quantized(model, weight_bits=8, overhead_per_tensor_byte
     return size_mb, bytes_main / (1024 ** 2), bytes_overhead / (1024 ** 2)
 
 def get_test_loader(batch_size=128):
-    mean = (0.4914, 0.4822, 0.4465)
-    std = (0.2470, 0.2435, 0.2616)
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(mean, std),
