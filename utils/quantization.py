@@ -75,11 +75,10 @@ def quantize_module_weights(module: nn.Module, num_bits: int = 8, exclude_first_
 
 class ActivationQuantizer(nn.Module):
     """
-    Placeholder for activation quantization.
+    Per-tensor uniform fake quantization for activations.
 
-    For this assignment version, we will NOT use it inside the forward pass,
-    but we keep the class so your imports still work and you can mention
-    how activations *would* be quantized (per-tensor uniform).
+    - If signed=False (typical after ReLU / ReLU6), use [0, 2^b - 1].
+    - If signed=True, use symmetric [-2^(b-1), 2^(b-1) - 1].
     """
 
     def __init__(self, num_bits: int = 8, signed: bool = False):
@@ -88,6 +87,33 @@ class ActivationQuantizer(nn.Module):
         self.signed = signed
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # For stability of accuracy, we just return x here.
-        # You still use act_bits for theoretical compression calculations.
-        return x
+        if not x.is_floating_point():
+            return x
+        if x.numel() == 0:
+            return x
+
+        eps = 1e-8
+
+        if self.signed:
+            # symmetric quantization around 0
+            qmax = 2 ** (self.num_bits - 1) - 1
+            qmin = -2 ** (self.num_bits - 1)
+            max_val = x.abs().max()
+            if max_val < eps:
+                return x
+            scale = max_val / float(qmax)
+            q = torch.round(x / scale).clamp(qmin, qmax)
+            x_hat = q * scale
+        else:
+            # unsigned [0, 2^b - 1] – good for ReLU/ReLU6
+            qmax = 2 ** self.num_bits - 1
+            qmin = 0
+            x_min = x.min()
+            x_max = x.max()
+            if (x_max - x_min).abs() < eps:
+                return x
+            scale = (x_max - x_min) / float(qmax - qmin)
+            q = torch.round((x - x_min) / scale).clamp(qmin, qmax)
+            x_hat = q * scale + x_min
+
+        return x_hat
