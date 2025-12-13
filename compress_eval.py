@@ -189,6 +189,18 @@ def get_args():
         default=42,
         help="Random seed",
     )
+    parser.add_argument(
+        "--wandb",
+        action="store_true",
+        help="Enable logging to Weights & Biases (wandb)",
+    )
+    parser.add_argument(
+        "--wandb_project",
+        type=str,
+        default="mobilenetv2_compression",
+        help="W&B project name",
+    )
+
     return parser.parse_args()
 
 def attach_activation_quantization(model: nn.Module, act_bits: int = 8, signed: bool = False):
@@ -224,6 +236,16 @@ def attach_activation_quantization(model: nn.Module, act_bits: int = 8, signed: 
 def main():
     args = get_args()
     print("Args:", vars(args))
+
+    wandb = None
+    if args.wandb:
+        import wandb as _wandb
+        wandb = _wandb
+        wandb.init(
+            project=args.wandb_project,
+            name=args.wandb_run_name,
+            config=vars(args),
+        )
 
     set_seed(args.seed)
 
@@ -273,7 +295,7 @@ def main():
         exclude_first_last=args.exclude_first_last,
     ).to(device)
 
-    # Attach activation fake-quantization
+    # Attach activation quantization
     print(f"==> Attaching activation quantization ({args.act_bits} bits)...")
     model_q = attach_activation_quantization(
         model_q,
@@ -310,6 +332,48 @@ def main():
     print("Evaluating quantized model on CIFAR-10 test set...")
     loss, acc = evaluate(model_q, test_loader, device)
     print(f"Quantized Test Loss: {loss:.4f}, Test Acc: {acc:.2f}%")
+
+    if wandb is not None:
+        # Convert activation bytes to MB for logging
+        act_fp32_mb = bytes_fp32 / (1024.0 ** 2)
+        act_q_mb = bytes_q / (1024.0 ** 2)
+
+        metrics = {
+            "weight_bits": args.weight_bits,
+            "act_bits": args.act_bits,
+            "exclude_first_last": int(args.exclude_first_last),
+            "baseline_model_mb": baseline_model_mb,
+            "quant_model_mb": quant_model_mb,
+            "quant_model_main_mb": main_mb,
+            "quant_model_overhead_mb": overhead_mb,
+            "activation_mem_fp32_mb": act_fp32_mb,
+            "activation_mem_q_mb": act_q_mb,
+            "quant_test_loss": loss,
+            "quant_test_acc": acc,
+        }
+
+        # Log scalar metrics
+        wandb.log(metrics)
+
+        # Build a table with one row for a parallel coordinates plot
+        table = wandb.Table(
+            columns=list(metrics.keys()),
+            data=[[metrics[k] for k in metrics.keys()]],
+        )
+
+        # Parallel coordinates plot
+        pc_plot = wandb.plot.parallel_coordinates(
+            table,
+            class_column="weight_bits",  # used for color grouping
+            cols=[
+                "baseline_model_mb",
+                "quant_model_mb",
+                "activation_mem_q_mb",
+                "quant_test_acc",
+            ],
+        )
+
+        wandb.log({"compression_parallel_plot": pc_plot})
 
 
 if __name__ == "__main__":
