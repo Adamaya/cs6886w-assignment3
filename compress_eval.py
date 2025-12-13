@@ -193,16 +193,6 @@ def main():
 
     # Wrap model with activation quantizer on outputs (for simplicity)
     act_q = ActivationQuantizer(num_bits=args.act_bits, signed=False)
-
-    class Wrapped(nn.Module):
-        def __init__(self, base, aq):
-            super().__init__()
-            self.base = base
-            self.aq = aq
-        def forward(self, x):
-            out = self.base(x)
-            return self.aq(out)
-
     model_q = Wrapped(model_q, act_q).to(device)
 
     # Quantized weight size (estimate)
