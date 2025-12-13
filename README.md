@@ -162,3 +162,18 @@ Files already downloaded and verified
 Activation bytes (FP32): 127.3918 MB
 Activation bytes (quantized, 4 bits): 15.9240 MB
 Compression ratio (activations): 8.00x
+
+Measuring activation memory for one forward pass...
+Activation bytes (FP32): 1560.5364 MB
+Activation bytes (quantized, 8 bits): 390.1341 MB
+Compression ratio (activations): 4.00x
+```
+Evaluating quantized model on CIFAR-10 test set...
+Quantized Test Loss: 0.2024, Test Acc: 96.39%
+Traceback (most recent call last):
+  File "D:\Mtech\cs6886w-assignment3\compress_eval.py", line 386, in <module>
+    main()
+  File "D:\Mtech\cs6886w-assignment3\compress_eval.py", line 371, in main
+    pc_plot = wandb.plot.parallel_coordinates(
+AttributeError: module 'wandb.plot' has no attribute 'parallel_coordinates'
+```
