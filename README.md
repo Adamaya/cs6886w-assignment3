@@ -144,3 +144,7 @@ Epoch [30] VALID - Loss: 0.6338 | Top-1: 96.12%
 
 Training finished. Best Top-1 accuracy: 96.21%
 Best model saved to: ./checkpoints/mobilenetv2_cifar10_best.pth
+
+```
+python compress_eval.py --checkpoint ./checkpoints/mobilenetv2_cifar10_best.pth --weight_bits 8 --act_bits 8 --batch_size 128 --device cuda
+```
