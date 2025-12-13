@@ -195,7 +195,7 @@ def train_one_epoch(
         optimizer.zero_grad()
 
         if scaler is not None:
-            with torch.cuda.amp.autocast():
+            with torch.amp.autocast('cuda'):
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
             scaler.scale(loss).backward()
@@ -213,13 +213,6 @@ def train_one_epoch(
         running_top1 += top1.item() * bs
         total += bs
 
-        if (i + 1) % 50 == 0:
-            avg_loss = running_loss / total
-            avg_acc = running_top1 / total
-            print(
-                f"Epoch [{epoch}] Step [{i+1}/{len(dataloader)}] "
-                f"Loss: {avg_loss:.4f} | Top-1: {avg_acc:.2f}%"
-            )
 
     loss = running_loss / total
     acc1 = running_top1 / total
@@ -415,12 +408,12 @@ def main():
 
     # AMP scaler
     scaler = (
-        torch.cuda.amp.GradScaler()
+        torch.amp.GradScaler('cuda')
         if (args.mixed_precision and device == "cuda")
         else None
     )
 
-    start_epoch = 0
+    start_epoch = 1
     best_acc = 0.0
     history = {
         "train_loss": [],
@@ -443,8 +436,8 @@ def main():
         )
 
     # Training loop
-    for epoch in range(start_epoch, args.epochs):
-        print(f"\n=== Epoch {epoch}/{args.epochs - 1} ===")
+    for epoch in range(start_epoch, args.epochs + 1):
+        print(f"\n=== Epoch {epoch}/{args.epochs} ===")
         train_loss, train_acc = train_one_epoch(
             model, criterion, optimizer, trainloader, device, epoch, scaler
         )
