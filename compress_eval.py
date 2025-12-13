@@ -192,8 +192,7 @@ def main():
     )
 
     # Wrap model with activation quantizer on outputs (for simplicity)
-    act_q = ActivationQuantizer(num_bits=args.act_bits, signed=False)
-    model_q = Wrapped(model_q, act_q).to(device)
+    model_q = model_q.to(device)
 
     # Quantized weight size (estimate)
     quant_model_mb, main_mb, overhead_mb = estimate_model_size_quantized(
