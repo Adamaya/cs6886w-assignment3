@@ -15,11 +15,31 @@
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
 ### **Submitted By:** Adamaya Sharma  
 ### **Roll No:** cs24m501  
 ### **GitHub Link:** [https://github.com/Adamaya/cs6886w-assignment3](https://github.com/Adamaya/cs6886w-assignment3)
 
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 <br>
 <br>
 <br>
@@ -241,22 +261,21 @@ $$
 Activations were measured by attaching forward hooks to `Conv`, `Linear`, and `ReLU6` layers, counting activation elements, and computing FP32 and quantized memory usage.
 
 FP32 activation memory:
-
-$$
-\text{Mem}_{\text{FP32}} = N \times 4 \text{ bytes}
-$$
+<p align="center">
+    <i>Mem</i><sub>FP32</sub> = <i>N</i> × 4 bytes
+</p>
 
 Quantized activation memory:
 
-$$
-\text{Mem}_{\text{quant}} = N \times \frac{\text{act\_bits}}{8}
-$$
+<p align="center">
+    <i>Mem</i><sub>quant</sub> = <i>N</i> × (<i>act_bits</i> / 8)
+</p>
 
 Activation compression:
 
-$$
-\text{CR}_{\text{act}} = \frac{\text{Mem}_{\text{FP32}}}{\text{Mem}_{\text{quant}}} = \frac{32}{\text{act\_bits}}
-$$
+<p align="center">
+    <i>CR</i><sub>act</sub> = <i>Mem</i><sub>FP32</sub> / <i>Mem</i><sub>quant</sub> = 32 / <i>act_bits</i>
+</p>
 
 Measured values:
 
